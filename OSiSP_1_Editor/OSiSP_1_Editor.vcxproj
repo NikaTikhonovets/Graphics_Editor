@@ -79,6 +79,7 @@
     <ClCompile Include="Editor.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Functions.h" />
     <ClInclude Include="Menu.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
