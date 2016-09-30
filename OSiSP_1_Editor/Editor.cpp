@@ -60,17 +60,21 @@ int WINAPI WinMain(HINSTANCE hInstance,
     HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 { 
 	MSG Msg;
-
+	HACCEL hAccelTable;
 	RegisterClass(hInstance);
     InitInstance(hInstance,nCmdShow);
 	hInst=hInstance;
 	CreateMyMenu(hMainWnd,hInst);
-	while (GetMessage(&Msg, NULL, 0, 0)) 
-    {
-        TranslateMessage(&Msg);
-        DispatchMessage(&Msg);
-    }
+	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDR_ACCELERATOR1));
 
+	while (GetMessage(&Msg, NULL, 0, 0))
+	{
+		if (!TranslateAccelerator(Msg.hwnd, hAccelTable, &Msg))
+		{
+			TranslateMessage(&Msg);
+			DispatchMessage(&Msg);
+		}
+	}
     return (int)Msg.wParam;
 }
 
@@ -81,15 +85,19 @@ LRESULT CALLBACK WndProc(HWND hMainWnd, UINT message,
     WPARAM wParam, LPARAM lParam)
 {
 	hdc = GetDC(hMainWnd);
-
+	HACCEL hAccelTable;
 
     switch (message) 
     {
 	case WM_CREATE:
 		hdcMeta=InitializeTempDC(hMainWnd,hdc);
+		InitHDC();
 		break;
 	case WM_COMMAND:
         switch (LOWORD(wParam)) {
+			/*case ID_PEN:
+				SetCursor(LoadCursor(hInst,MAKEINTRESOURCE(IDC_HAND)));
+				break;*/
 			case ID_SAVE:
 				InitStructFile("Save");
 				if (GetSaveFileName(&openFileName) == TRUE)		
@@ -106,9 +114,9 @@ LRESULT CALLBACK WndProc(HWND hMainWnd, UINT message,
 					PrintFile();
 				break;
 			case ID_CANCEL:
-				isCancel=true;
-				InvalidateRect(hMainWnd, NULL, TRUE);
-				UpdateWindow(hMainWnd);
+				StretchBlt(finalPicture,0,0,rect.right,rect.bottom,prevFinalPicture,0,0,rect.right,rect.bottom,SRCCOPY);
+				StretchBlt(hdc,0,0,rect.right,rect.bottom,finalPicture,offsetX,offsetY,rect.right/scale,rect.bottom/scale,SRCCOPY);
+				StretchBlt(hDrawingArea,0,0,rect.right,rect.bottom,finalPicture,0,0,rect.right,rect.bottom,SRCCOPY);
 				break;
 			case ID_COLOR:
 				ChangeColor(ID_COLOR);
@@ -139,8 +147,10 @@ LRESULT CALLBACK WndProc(HWND hMainWnd, UINT message,
 				break;
 			case ID_NEW:
 				GetClientRect(hMainWnd,&rect);
-				FillRect(hdc,&rect,WHITE_BRUSH);
-				FillRect(hdcMeta,&rect,WHITE_BRUSH);
+				PatBlt(finalPicture,0,0,rect.right,rect.bottom,WHITENESS);
+				PatBlt(prevFinalPicture,0,0,rect.right,rect.bottom,WHITENESS);
+				PatBlt(hDrawingArea,0,0,rect.right,rect.bottom,WHITENESS);
+				PatBlt(hdc,0,0,rect.right,rect.bottom,WHITENESS);
 				break;
 			default:
 				tool = LOWORD(wParam);
@@ -150,19 +160,18 @@ LRESULT CALLBACK WndProc(HWND hMainWnd, UINT message,
 			break;
 	case WM_LBUTTONDOWN:
 		StartPos=MAKEPOINTS(lParam);
-		flag=false;
-		ReleaseDC(hMainWnd, hdc);
+		GetNewCoord(StartPos.x,StartPos.y,offsetX,offsetY,scale);
 		break;
 	case WM_LBUTTONUP:
 		EndPos=MAKEPOINTS(lParam);
+		GetNewCoord(EndPos.x,EndPos.y,offsetX,offsetY,scale);
 		switch (tool)
 		{
 			case ID_ELLIPSE:
 			case ID_RECTANGLE:
 			case ID_LINE:
-				Draw(hdc, tool);
+				Draw(hDrawingArea, tool);
 				Draw(hdcMeta,tool);
-				flag = false;
 				break;
 			case ID_TEXT:
 				StartPos = EndPos;
@@ -171,11 +180,13 @@ LRESULT CALLBACK WndProc(HWND hMainWnd, UINT message,
 			case ID_POLYGON:
 			case ID_BROKEN:
 				AddPoint();
-				Draw(hdc, tool);
+				Draw(hDrawingArea, tool);
 				Draw(hdcMeta,tool);
 				break;
 		}
-		BitmapCreate(hdc,rect);
+		StretchBlt(hdc,0,0,rect.right,rect.bottom,hDrawingArea,offsetX,offsetY,rect.right/scale,rect.bottom/scale,SRCCOPY);
+		StretchBlt(prevFinalPicture,0,0,rect.right,rect.bottom,finalPicture,0,0,rect.right,rect.bottom,SRCCOPY);
+		StretchBlt(finalPicture,0,0,rect.right,rect.bottom,hDrawingArea,0,0,rect.right,rect.bottom,SRCCOPY);
 		break;
 
 	case WM_MOUSEMOVE:
@@ -183,87 +194,121 @@ LRESULT CALLBACK WndProc(HWND hMainWnd, UINT message,
 		{
 			if (tool == ID_PEN||tool==ID_CLEAR)
 			{
+				
 				EndPos = MAKEPOINTS(lParam);
-				Draw(hdc, tool);
+				GetNewCoord(EndPos.x,EndPos.y,offsetX,offsetY,scale);
+				Draw(hDrawingArea, tool);
 				Draw(hdcMeta,tool);
+				StretchBlt(hdc,0, 0, rect.right, rect.bottom,hDrawingArea, offsetX, offsetY,rect.right/scale,rect.bottom/scale, SRCCOPY);
 				StartPos = EndPos;
 			}
 			else
 			{
-				SetROP2(hdc, R2_NOTXORPEN);
-				if (flag)
-					Draw(hdc,tool);
 				EndPos = MAKEPOINTS(lParam);
-				Draw(hdc,tool);
-				flag = true;
+				GetNewCoord(EndPos.x,EndPos.y,offsetX,offsetY,scale);
+				StretchBlt(hDrawingArea, 0, 0, rect.right, rect.bottom,finalPicture, 0, 0,rect.right,rect.bottom, SRCCOPY);
+				Draw(hDrawingArea,tool);
+				StretchBlt(hdc,0, 0, rect.right, rect.bottom,hDrawingArea, offsetX, offsetY,rect.right/scale,rect.bottom/scale, SRCCOPY);
+
 			}
 			}
-			GetFocus();
-			ReleaseDC(hMainWnd, hdc);
+
 			break;
 
 		case WM_KEYDOWN:
-			if ((GetAsyncKeyState(VK_CONTROL)) && (GetAsyncKeyState(0x5A)))
-			{
-				InvalidateRect(hMainWnd, NULL, TRUE);
-				UpdateWindow(hMainWnd);
-			}
-			if (wParam == VK_ESCAPE && !isFirstPoint&&tool==ID_POLYGON)
+			if (wParam == VK_ESCAPE && !isFirstPoint)
 			{
 				if (tool==ID_POLYGON)
 				{
 					isFirstPoint = true;
 					numberPoint++;
 					POINTSTOPOINT(points[numberPoint], firstPoint);
-					Draw(hdc, tool);
-					Draw(hdcMeta,tool);
+					MoveToEx(hDrawingArea, EndPos.x, EndPos.y, NULL);
+					LineTo(hDrawingArea, firstPoint.x, firstPoint.y);
 					free(points);
 				}
 				else
 				{
 					isFirstPoint = true;
-					Draw(hdc, tool);
-					Draw(hdcMeta,tool);
 					free(points);
 				}
+			StretchBlt(hdc,0,0,rect.right,rect.bottom,hDrawingArea,offsetX,offsetY,rect.right/scale,rect.bottom/scale,SRCCOPY);
+			StretchBlt(prevFinalPicture,0,0,rect.right,rect.bottom,finalPicture,0,0,rect.right,rect.bottom,SRCCOPY);
+			StretchBlt(finalPicture,0,0,rect.right,rect.bottom,hDrawingArea,0,0,rect.right,rect.bottom,SRCCOPY);
 			}
+			break;
+		case WM_SIZE:
+		case WM_SIZING:
+			GetClientRect(hMainWnd,&rect);
+			FillRect(hdc,&rect,WHITE_BRUSH);
+			StretchBlt(hdc,0,0,rect.right,rect.bottom,finalPicture,offsetX,offsetY,rect.right/scale,rect.bottom/scale,SRCCOPY);
 			break;
 
 		case WM_CHAR:
 			if (tool == ID_TEXT)
 			{
 				string.append((wchar_t*)(&wParam));
-				TextOut(hdc, StartPos.x, StartPos.y, (LPCSTR)&string[0], string.length());
+				TextOut(hDrawingArea, StartPos.x, StartPos.y, (LPCSTR)&string[0], string.length());
 				TextOut(hdcMeta, StartPos.x, StartPos.y, (LPCSTR)&string[0], string.length());
-				BitmapCreate(hdc,rect);
+				StretchBlt(hdc,0, 0, rect.right, rect.bottom,hDrawingArea, 0, 0,rect.right/scale,rect.bottom/scale, SRCCOPY);
+				StretchBlt(finalPicture,0, 0, rect.right, rect.bottom,hDrawingArea, 0, 0,rect.right/scale,rect.bottom/scale, SRCCOPY);
 			}
 			break;
 
 	case WM_MOUSEWHEEL:
 			hdc = GetDC(hMainWnd);
-			hdcMem = CreateCompatibleDC(hdc);
-			oldBitmap = SelectObject(hdcMem, hBitmap);
 			GetClientRect(hMainWnd, &rect);
-			BitmapLoad(hdcMem, hMainWnd, rect);
 			if (GET_WHEEL_DELTA_WPARAM(wParam) < 0)
-				ZoomPan(wParam,0.04,5);
-			else
-				ZoomPan(wParam,-0.04,-5);
-			BitmapCreate(hdc,rect);
+			{
+				if (LOWORD(wParam) == MK_CONTROL)
+				{
+					scale += 0.06;
+					StretchBlt(hdc, offsetX, offsetY, rect.right * scale, rect.bottom * scale,finalPicture, 0, 0, rect.right, rect.bottom, SRCCOPY);
+				}
+				else {
+					if (LOWORD(wParam) == MK_SHIFT)
+						{
+						offsetX += 5;
+					StretchBlt(hdc, offsetX, offsetY, rect.right * scale, rect.bottom * scale,finalPicture, 0, 0, rect.right, rect.bottom, SRCCOPY);
+						}
+					else {
+						offsetY += 5;
+						StretchBlt(hdc, offsetX, offsetY, rect.right * scale, rect.bottom * scale,finalPicture, 0, 0, rect.right, rect.bottom, SRCCOPY);
+										  
+					}
+				}
+			}
+			if (GET_WHEEL_DELTA_WPARAM(wParam) > 0)
+			{
+				if (LOWORD(wParam) == MK_CONTROL)
+				{
+					scale -= 0.06;
+						StretchBlt(hdc, offsetX, offsetY, rect.right * scale, rect.bottom * scale,
+						finalPicture, 0, 0, rect.right, rect.bottom, SRCCOPY);
+				}
+				else {
+					if (LOWORD(wParam) == MK_SHIFT)
+						{
+						offsetX -= 5;
+						StretchBlt(hdc, offsetX, offsetY, rect.right * scale, rect.bottom * scale,finalPicture, 0, 0, rect.right, rect.bottom, SRCCOPY);
+						}
+					else {
+						offsetY -= 5;
+						StretchBlt(hdc, offsetX, offsetY, rect.right * scale, rect.bottom * scale,finalPicture, 0, 0, rect.right, rect.bottom, SRCCOPY);
+										  
+					}
+				}
+			}
 			ReleaseDC(hMainWnd, hdc);
 			break;
-	case WM_PAINT:
-			hdc = BeginPaint(hMainWnd, &paintstr);
-				BitmapLoad(hdc, hMainWnd, rect);
-			EndPaint(hMainWnd, &paintstr);
-			break;
     case WM_DESTROY:
+			DeleteObject(hDrawingArea);
+			DeleteObject(finalPicture);
+			DeleteObject(prevFinalPicture);
 			DeleteEnhMetaFile(CloseEnhMetaFile(hdcMeta));
 			PostQuitMessage(0);
 			break;
-
-	default:
-		ReleaseDC(hMainWnd, hdc);
+	default:	
 		return DefWindowProc(hMainWnd, message, wParam, lParam);
     }
 	ReleaseDC(hMainWnd, hdc);

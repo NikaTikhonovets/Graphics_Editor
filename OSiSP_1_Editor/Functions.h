@@ -1,7 +1,8 @@
 #include <Windows.h>
 
 HWND hMainWnd,hPicture;
-HDC hdc,hdcMem, hdcMeta=NULL;
+HDC hdcMem, hdcMeta=NULL;
+HDC hdc=NULL;
 HBITMAP hBitmap,bmp,hOldBitmap;
 HGDIOBJ oldBitmap;
 HINSTANCE hInst;
@@ -13,7 +14,7 @@ std::wstring string;
 PAINTSTRUCT paintstr;
 CHOOSECOLOR colorDlg;
 COLORREF colors[16];
-DWORD currentColorPen,currentColorBrush,currentColor;
+DWORD currentColor;
 int widthPen, numberPoint,tool= ID_PEN;
 HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
 HBRUSH hBrush=CreateSolidBrush(RGB(255,255,255));			
@@ -25,41 +26,9 @@ PRINTDLG printDlg;
 HENHMETAFILE hEnhMetafile, hEnhMetafileCopy;
 int offsetX = 0, offsetY = 0;
 double scale = 1;
+	HDC hDrawingArea;
+	HDC finalPicture,prevFinalPicture;
 
-void BitmapCreate(HDC hdc, RECT rect)
-{
-   
-    HDC hdcMem = CreateCompatibleDC(hdc);
-	hOldBitmap=hBitmap;
-    hBitmap = CreateCompatibleBitmap(hdc, rect.right, rect.bottom);
-    HANDLE oldBitmap = SelectObject(hdcMem, hBitmap);
-    BitBlt(hdcMem, 0, 0, rect.right, rect.bottom, hdc, 0, 0, SRCCOPY);
-    SelectObject(hdcMem, oldBitmap);
-    DeleteObject(oldBitmap);
-    DeleteDC(hdcMem);
-
-}
-
-
-void BitmapLoad(HDC hdc, HWND hWnd, RECT rect)
-{
-	HGDIOBJ oldBitmap;
-	BITMAP bitmap;
-	HDC hdcMem = CreateCompatibleDC(hdc);
-	if (isCancel)
-	{	oldBitmap = SelectObject(hdcMem, hOldBitmap);
-		GetObject(hOldBitmap, sizeof(bitmap), &bitmap);
-		hBitmap=hOldBitmap;
-	}
-	else
-	{
-		oldBitmap = SelectObject(hdcMem, hBitmap);
-		GetObject(hBitmap, sizeof(bitmap), &bitmap);
-	}
-		BitBlt(hdc, 0, 0, rect.right, rect.bottom, hdcMem, 0, 0, SRCCOPY);
-		SelectObject(hdcMem, oldBitmap);
-    DeleteDC(hdcMem);
-}
 
 
 void Draw(HDC hdc, int tool)
@@ -77,6 +46,10 @@ void Draw(HDC hdc, int tool)
 		case ID_BROKEN:	
 		case ID_POLYGON:
 			Polyline(hdc, points, numberPoint + 1);
+			if (isFirstPoint)
+			MoveToEx(hdc, StartPos.x, StartPos.y, NULL);
+			else MoveToEx(hdc, points[numberPoint].x, points[numberPoint].y, NULL);
+			LineTo(hdc, EndPos.x, EndPos.y);
 			break;
 		case ID_RECTANGLE:
 			Rectangle(hdc, StartPos.x, StartPos.y, EndPos.x, EndPos.y);
@@ -117,6 +90,7 @@ void ChangeColor(int command)
 
 HDC InitializeTempDC(HWND hWnd, HDC hdc)
 {
+
 	int iWidthMM, iWidthRes, iHeightMM, iHeightRes;
 
 	iWidthMM = GetDeviceCaps(hdc, HORZSIZE);
@@ -169,6 +143,7 @@ void InitStructFile(LPSTR title)
 
 void SaveEnhFile()
 {
+	hdc=GetDC(hMainWnd);
 	hEnhMetafile = CloseEnhMetaFile(hdcMeta);
 	hEnhMetafileCopy = CopyEnhMetaFile(hEnhMetafile, openFileName.lpstrFile);
 	DeleteEnhMetaFile(hEnhMetafile);
@@ -176,16 +151,22 @@ void SaveEnhFile()
 	GetClientRect(hMainWnd, &rect);
 	PlayEnhMetaFile(hdcMeta, hEnhMetafileCopy, &rect);
 	DeleteEnhMetaFile(hEnhMetafileCopy);
+	ReleaseDC(hMainWnd,hdc);
 }
 
 void LoadEnhFile()
 {
+	hdc=GetDC(hMainWnd);
 	hEnhMetafile = GetEnhMetaFile(openFileName.lpstrFile);
 	GetClientRect(hMainWnd, &rect);
 	FillRect(hdc, &rect, hBrush);
 	FillRect(hdcMeta, &rect, hBrush);
-	PlayEnhMetaFile(hdc, hEnhMetafile, &rect);
+	PlayEnhMetaFile(hdc,hEnhMetafile,&rect);
+	StretchBlt(finalPicture,0,0,rect.right,rect.bottom,hdc,0,0,rect.right,rect.bottom,SRCCOPY);
+	StretchBlt(prevFinalPicture,0,0,rect.right,rect.bottom,hdc,0,0,rect.right,rect.bottom,SRCCOPY);
+	StretchBlt(hDrawingArea,0,0,rect.right,rect.bottom,hdc,0,0,rect.right,rect.bottom,SRCCOPY);
 	DeleteEnhMetaFile(hEnhMetafile);
+	ReleaseDC(hMainWnd,hdc);
 }
 
 void InitStructPrint()
@@ -239,7 +220,7 @@ void AddPoint()
 		points = (POINT*)calloc(50, sizeof(POINT));
 		POINTSTOPOINT(points[numberPoint], EndPos);
 		isFirstPoint = false;
-		firstPoint = EndPos;
+		firstPoint = StartPos;
 	}
 	else
 	{
@@ -268,4 +249,49 @@ void ZoomPan(WPARAM wparam,double i,int offset)
 										  
 		}
 	}
+}
+void InitHDC()
+{
+
+		HBITMAP bmFinalCopy;
+		HBITMAP bmDrawingCopy;
+		HBRUSH brush;
+		HDC hdc;
+		
+
+		brush = CreateSolidBrush(0xffffff);
+		hdc = GetDC(hMainWnd);
+
+		hDrawingArea = CreateCompatibleDC(hdc);
+		bmDrawingCopy = CreateCompatibleBitmap(hdc, rect.right, rect.bottom);
+		SelectObject(hDrawingArea, bmDrawingCopy);
+		SelectObject(hDrawingArea, brush);
+		PatBlt(hDrawingArea, 0, 0, rect.right, rect.bottom, PATCOPY);
+
+
+		finalPicture = CreateCompatibleDC(hdc);
+		bmFinalCopy = CreateCompatibleBitmap(hdc, rect.right, rect.bottom);
+		SelectObject(finalPicture, bmFinalCopy);
+		SelectObject(finalPicture, brush);
+		PatBlt(finalPicture, 0, 0, rect.right, rect.bottom, PATCOPY);
+
+		prevFinalPicture = CreateCompatibleDC(hdc);
+		bmFinalCopy = CreateCompatibleBitmap(hdc, rect.right, rect.bottom);
+		SelectObject(prevFinalPicture, bmFinalCopy);
+		SelectObject(prevFinalPicture, brush);
+		PatBlt(prevFinalPicture, 0, 0, rect.right, rect.bottom, PATCOPY);
+
+		ReleaseDC(hMainWnd, hdc);
+		DeleteObject(brush);
+		DeleteObject(bmDrawingCopy);
+		DeleteObject(bmFinalCopy);
+
+}
+
+void GetNewCoord(int x, int y, int offsetX, int offsetY, double scale)
+{
+		x /= scale;
+		y /= scale;
+		x += offsetX;
+		y += offsetY;
 }

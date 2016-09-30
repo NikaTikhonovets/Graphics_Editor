@@ -58,8 +58,8 @@ HMENU CreateMyMenu(HWND hMainWnd,HINSTANCE hInst)
 		 SetMenuBitmaps(hPopupMenu_Tools,hInst,IDB_BITMAP13,ID_TEXT,"Текст");
 		 AppendMenu(hPopupMenu_Tools, MF_STRING, (UINT)ID_CLEAR, "Ластик");
 		 AppendMenu(hPopupMenu_Tools, MF_SEPARATOR, 0, "");
-		 SetMenuBitmaps(hPopupMenu_Tools,hInst,IDB_BITMAP10,ID_BRUSH,"Заливка");
-		 AppendMenu(hPopupMenu_Tools, MF_STRING, (UINT)ID_COLOR, "Цвет");
+		 SetMenuBitmaps(hPopupMenu_Tools,hInst,IDB_BITMAP10,ID_BRUSH,"Цвет заливки");
+		 AppendMenu(hPopupMenu_Tools, MF_STRING, (UINT)ID_COLOR, "Цвет пера");
 		 AppendMenu(hPopupMenu_Tools, MF_SEPARATOR, 0, "");
 		 AppendMenu(hPopupMenu_Tools, MF_STRING|MF_POPUP, (UINT)hPopupMenu_Width, "Толщина");
 		 {
@@ -70,7 +70,7 @@ HMENU CreateMyMenu(HWND hMainWnd,HINSTANCE hInst)
 			 AppendMenu(hPopupMenu_Width, MF_STRING, (UINT)ID_WIDTH5, "5");
 			 AppendMenu(hPopupMenu_Width, MF_STRING, (UINT)ID_WIDTH6, "6");
 		 }
-		 AppendMenu(hPopupMenu_Tools, MF_STRING, (UINT)ID_CANCEL, "Отмена");
+		 AppendMenu(hPopupMenu_Tools, MF_STRING, (UINT)ID_CANCEL, "Отмена\t Ctrl+Z");
 	 }
 
 	 	 AppendMenu(MainMenu, MF_STRING | MF_POPUP, (UINT)hPopupMenu_Figures, "Фигуры");  

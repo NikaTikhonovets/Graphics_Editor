@@ -1,9 +1,26 @@
-﻿Построение начато 27.09.2016 2:27:18.
+﻿Построение начато 29.09.2016 8:33:22.
      1>Проект "D:\ОСиСП\OSiSP_1_Editor\OSiSP_1_Editor\OSiSP_1_Editor.vcxproj" в узле 2 (целевые объекты Build).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc110.pdb" /Gd /TP /analyze- /errorReport:prompt Editor.cpp
          Editor.cpp
-     1>d:\осисп\osisp_1_editor\osisp_1_editor\functions.h(257): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\functions.h(238): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\functions.h(293): warning C4244: /=: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\functions.h(294): warning C4244: /=: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\editor.cpp(118): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\editor.cpp(187): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\editor.cpp(202): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\editor.cpp(211): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\editor.cpp(235): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\editor.cpp(244): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\editor.cpp(253): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\editor.cpp(254): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\editor.cpp(266): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\editor.cpp(272): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\editor.cpp(276): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\editor.cpp(287): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\editor.cpp(293): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\editor.cpp(297): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+     1>d:\осисп\osisp_1_editor\osisp_1_editor\editor.cpp(88): warning C4101: hAccelTable: неиспользованная локальная переменная
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\ОСиСП\OSiSP_1_Editor\Debug\OSiSP_1_Editor.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:\ОСиСП\OSiSP_1_Editor\Debug\OSiSP_1_Editor.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\ОСиСП\OSiSP_1_Editor\Debug\OSiSP_1_Editor.lib" /MACHINE:X86 Debug\OSiSP_1_Editor.res
          Debug\Editor.obj
@@ -12,4 +29,4 @@
 
 Построение успешно завершено.
 
-Затраченное время: 00:00:01.74
+Затраченное время: 00:00:01.91
